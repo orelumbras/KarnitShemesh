@@ -102,3 +102,16 @@ $('#future-next').addEventListener('click',()=>{if(!motionPref.matches&&!documen
 // Native dialogs must not compete with animated compositing layers on mobile.
 function pauseScene(){document.body.classList.add('dialog-active');cancelAnimationFrame(frameId);frameId=0;sparkle.clearRect(0,0,sparkleW,sparkleH)}
 for(const modal of document.querySelectorAll('dialog'))modal.addEventListener('close',()=>{if(modal.open)return;if(modal.id==='dossier')$('#dossier-content').replaceChildren();if(modal.id==='lightbox')$('#full-photo').removeAttribute('src');if(!document.querySelector('dialog[open]')){document.body.classList.remove('dialog-active');startMotion()}});
+
+// Curated excerpts only. The original chat never ships to the public site.
+const chatQuestions=[
+ {quote:'אם למישהו יש בעיה שיגיד לי ואני יסנן אותו',author:'איתי',date:'03.05.2022',context:'תיאום השעה שבה מגיעים אליו. שירות לקוחות ללא התחייבות למענה.'},
+ {quote:'אין לי כוח לקרוא את המליון הודעות',author:'יאנקו',date:'04.09.2025',context:'מיד אחרי ששאל מה נסגר מחר. תקציר מנהלים התבקש.'},
+ {quote:'יאללה פוצץ כל אחד ישאר בבית שלו וישן במיטה',author:'אגם',date:'08.05.2026',context:'במהלך הדיון לאן יוצאים. לפחות התקבלה החלטה.'},
+ {quote:'אני זמין להזמין את הסרט',author:'עידן',date:'11.06.2026',context:'בזמן תיאום סרט. זמינות עם ייעוד מאוד מסוים.'}
+];
+let quizIndex=0,quizScore=0,quizAnswered=false;
+function renderChatQuiz(){if(!motionPref.matches&&!document.body.classList.contains('gentle-motion'))$('#quiz-quote').animate([{opacity:.25,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:220,easing:'ease-out'});const q=chatQuestions[quizIndex];quizAnswered=false;$('#quiz-count').textContent=`הודעה ${quizIndex+1} / ${chatQuestions.length}`;$('#quiz-score').textContent=`${quizScore} תשובות נכונות`;$('#quiz-quote').textContent='״'+q.quote+'״';$('#quiz-result').textContent='';$('#quiz-next').hidden=true;$('#quiz-restart').hidden=true;$('#quiz-options').replaceChildren();['איתי','יאנקו','אגם','עידן'].forEach(name=>{const b=text('button',name);b.type='button';b.onclick=()=>{if(quizAnswered)return;quizAnswered=true;const correct=name===q.author;if(correct)quizScore++;$('#quiz-score').textContent=`${quizScore} תשובות נכונות`;$('#quiz-options').querySelectorAll('button').forEach(option=>{option.disabled=true;option.classList.toggle('answer-correct',option.textContent===q.author)});b.classList.toggle('answer-wrong',!correct);$('#quiz-result').textContent=(correct?'בול. ':'הפעם זה '+q.author+'. ')+q.author+' · '+q.date+' — '+q.context;const last=quizIndex===chatQuestions.length-1;$('#quiz-next').hidden=last;$('#quiz-restart').hidden=!last;if(last)$('#quiz-result').textContent+=` סיימתם עם ${quizScore} מתוך ${chatQuestions.length}.`;};$('#quiz-options').append(b)})}
+$('#quiz-next').onclick=()=>{quizIndex++;renderChatQuiz()};$('#quiz-restart').onclick=()=>{quizIndex=0;quizScore=0;renderChatQuiz()};renderChatQuiz();
+
+const chatEntrance=new IntersectionObserver(entries=>{if(entries[0].isIntersecting){$('#chat-lab').classList.add('chat-entered');chatEntrance.disconnect()}},{threshold:.1});chatEntrance.observe($('#chat-lab'));
