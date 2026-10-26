@@ -21,3 +21,4 @@ body{background:var(--bg);color:var(--ink);font:400 16px/1.7 var(--body)}
 /* Keep secondary labels compact at every breakpoint. */
 .hub-stats .hub-stat-note strong{font:400 12px/1.6 var(--body)}
 .hub-enabled .footer>span,.hub-enabled .footer .secret-meter{font:400 11px/1.8 var(--body)}
+@media(max-width:600px){.gallery{margin-inline:0;padding-inline:0;max-width:100%}}
