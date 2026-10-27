@@ -1,19 +1,22 @@
 (function(root,factory){const game=factory();if(typeof module==='object'&&module.exports)module.exports=game;else root.KarnitArcade=game})(globalThis,()=>{
  'use strict';
- const friends=['אוראל','אגם','איתי','עידן','אביחי','יאנקו','רם','איליי'];
- function create(seed=Date.now()){return {seed:seed>>>0,lane:1,x:1,elapsed:0,left:60,lives:3,score:0,collected:[],objects:[],spawn:1,friendTimer:1.8,bonusTimer:8,invincible:0,ended:false,reason:null,events:[],serial:0}}
+ const friends=['אביחי','אוראל','עידן','אגם','יאנקו','איתי'];
+ const zones=[['טיילת השקיעה',0],['לילה בעיר',1],['המרינה',2],['שכונת הדקלים',3],['מרכז העיר',8],['הנמל',4],['שדה התעופה',6],['גשר האיים',10],['הביצות',7],['אתר הבנייה',9],['המחלף',5],['רחבת הדריפט',11]];
+ const difficulty=level=>({speed:Math.min(.64,.255+(level-1)*.033),interval:Math.max(.7,1.65-(level-1)*.1),doubleChance:level<3?0:Math.min(.62,.15+(level-3)*.07)});
+ function create(seed=Date.now()){return {seed:seed>>>0,lane:1,x:1,elapsed:0,levelElapsed:0,level:1,left:100,lives:4,score:0,collected:[],totalCollected:0,objects:[],spawn:2,friendTimer:1.1,bonusTimer:6,invincible:2,shield:0,slow:0,combo:0,cleared:false,ended:false,reason:null,events:[],serial:0,clearedBonus:0}}
  function random(s){s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296}
- function move(s,direction){if(!s.ended)s.lane=Math.max(0,Math.min(2,s.lane+Math.sign(direction)))}
- function add(s,type,lane,y=-.12,friend=null){s.objects.push({id:++s.serial,type,lane,y,friend,passed:false})}
- function finish(s,reason){s.ended=true;s.reason=reason;s.score+=s.collected.length*150+(reason==='crew'?Math.round(s.left)*10:0)}
- function tick(s,delta){if(s.ended)return;s.events=[];const dt=Math.max(0,Math.min(.05,delta));s.elapsed+=dt;s.left=Math.max(0,s.left-dt);s.invincible=Math.max(0,s.invincible-dt);s.x+=(s.lane-s.x)*Math.min(1,dt*16);const speed=.31+Math.min(.16,s.elapsed*.0028);
+ function move(s,direction){if(!s.ended&&!s.cleared&&Number.isFinite(direction))s.lane=Math.max(0,Math.min(2,s.lane+Math.sign(direction)))}
+ function add(s,type,lane,y=-.12,friend=null,extra={}){s.objects.push({id:++s.serial,type,lane,y,friend,passed:false,...extra})}
+ function finish(s,reason){if(s.ended)return;s.ended=true;s.reason=reason;s.score+=s.collected.length*100}
+ function nextLevel(s){if(!s.cleared||s.ended)return false;s.level++;s.left=100+Math.min(30,Math.floor(s.left*.2));s.lives=Math.min(5,s.lives+1);s.levelElapsed=0;s.collected=[];s.objects=[];s.spawn=2;s.friendTimer=1.1;s.bonusTimer=5;s.invincible=2.5;s.shield=0;s.slow=0;s.cleared=false;s.combo=0;s.events=[];return true}
+ function tick(s,delta){if(s.ended||s.cleared)return;s.events=[];const dt=Math.max(0,Math.min(.05,Number.isFinite(delta)?delta:0));s.elapsed+=dt;s.levelElapsed+=dt;s.left=Math.max(0,s.left-dt);s.invincible=Math.max(0,s.invincible-dt);s.shield=Math.max(0,s.shield-dt);s.slow=Math.max(0,s.slow-dt);s.x+=(s.lane-s.x)*Math.min(1,dt*14);const settings=difficulty(s.level),speed=settings.speed*(s.slow>0?.55:1);
  s.spawn-=dt;s.friendTimer-=dt;s.bonusTimer-=dt;
- if(s.spawn<=0){const lane=Math.floor(random(s)*3);add(s,random(s)<.7?'car':'cone',lane);s.spawn=1.25-Math.min(.28,s.elapsed*.003)}
- if(s.friendTimer<=0){const pending=friends.filter(n=>!s.collected.includes(n)&&!s.objects.some(o=>o.friend===n));if(pending.length){const name=pending[Math.floor(random(s)*pending.length)];let lane=Math.floor(random(s)*3);if(s.objects.some(o=>o.lane===lane&&o.y<.12&&['car','cone'].includes(o.type)))lane=(lane+1)%3;add(s,'friend',lane,-.18,name)}s.friendTimer=2.8}
- if(s.bonusTimer<=0){add(s,'clock',Math.floor(random(s)*3),-.2);s.bonusTimer=10}
- for(const o of s.objects){o.y+=speed*dt;if(!o.passed&&Math.abs(o.y-.79)<.065&&Math.abs(o.lane-s.x)<.52){if(o.type==='friend'){o.passed=true;if(!s.collected.includes(o.friend)){s.collected.push(o.friend);s.score+=100;s.events.push({type:'friend',name:o.friend})}}else if(o.type==='clock'){o.passed=true;s.left=Math.min(75,s.left+5);s.score+=50;s.events.push({type:'clock'})}else if(s.invincible<=0){o.passed=true;s.lives--;s.invincible=1.5;s.events.push({type:'hit'});if(s.lives<=0){finish(s,'crash');break}}}else if(!o.passed&&o.y>.9&&['car','cone'].includes(o.type)){o.passed=true;s.score+=10}}
+ if(s.spawn<=0){const gap=Math.floor(random(s)*3),lanes=[0,1,2].filter(l=>l!==gap),first=lanes[Math.floor(random(s)*2)];add(s,random(s)<.82?'car':'cone',first);if(random(s)<settings.doubleChance)add(s,'car',lanes.find(l=>l!==first));s.spawn=settings.interval}
+ if(s.friendTimer<=0){const pending=friends.filter(n=>!s.collected.includes(n)&&!s.objects.some(o=>o.friend===n));if(pending.length){const name=pending[Math.floor(random(s)*pending.length)];const safe=[0,1,2].filter(l=>!s.objects.some(o=>o.lane===l&&o.y<.18&&['car','cone'].includes(o.type)));const lane=safe.length?safe[Math.floor(random(s)*safe.length)]:Math.floor(random(s)*3);add(s,'friend',lane,-.16,name)}s.friendTimer=Math.max(2.5,3.8-s.level*.1)}
+ if(s.bonusTimer<=0){const safe=[0,1,2].filter(l=>!s.objects.some(o=>o.lane===l&&o.y<.18&&['car','cone'].includes(o.type)));if(safe.length){const roll=random(s);add(s,roll<.55?'clock':roll<.8?'shield':'slow',safe[Math.floor(random(s)*safe.length)],-.15,null,{bonus:random(s)<.85?10:30})}s.bonusTimer=9}
+ for(const o of s.objects){o.y+=speed*dt;if(!o.passed&&Math.abs(o.y-.79)<.058&&Math.abs(o.lane-s.x)<.49){if(o.type==='friend'){o.passed=true;if(!s.collected.includes(o.friend)){s.collected.push(o.friend);s.totalCollected++;s.combo++;s.score+=150+s.combo*25;s.events.push({type:'friend',name:o.friend,combo:s.combo})}}else if(o.type==='clock'){o.passed=true;s.left=Math.min(160,s.left+(o.bonus||10));s.score+=75;s.events.push({type:'clock',bonus:o.bonus||10})}else if(o.type==='shield'){o.passed=true;s.shield=8;s.score+=75;s.events.push({type:'shield'})}else if(o.type==='slow'){o.passed=true;s.slow=6;s.score+=75;s.events.push({type:'slow'})}else if(s.invincible<=0){o.passed=true;if(s.shield>0){s.shield=0;s.invincible=1;s.events.push({type:'blocked'})}else{s.lives--;s.combo=0;s.invincible=2;s.events.push({type:'hit'});if(s.lives<=0){finish(s,'crash');break}}}}else if(!o.passed&&o.y>.91&&['car','cone'].includes(o.type)){o.passed=true;s.score+=15*s.level}}
  s.objects=s.objects.filter(o=>o.y<1.15&&(!o.passed||['car','cone'].includes(o.type)));
- if(!s.ended&&s.collected.length===friends.length)finish(s,'crew');if(!s.ended&&s.left<=0)finish(s,'time');
+ if(!s.ended&&s.collected.length===friends.length){s.clearedBonus=500*s.level+Math.round(s.left)*5;s.score+=s.clearedBonus;s.cleared=true;s.events.push({type:'level'})}if(!s.ended&&!s.cleared&&s.left<=0)finish(s,'time');
  }
- return {friends,create,move,tick,add};
+ return {friends,zones,difficulty,create,move,tick,add,nextLevel};
 });
