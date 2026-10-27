@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { validateNote, wallApi } from '../backend/wall/api.ts';
+const valid={id:'01234567-1234-1234-1234-012345678901',author:' אדם ',body:'שלום\n<script>literal</script>',color:'mint'};
+assert.equal(validateNote(valid).author,'אדם');assert.equal(validateNote(valid).body,valid.body);
+for(const bad of [{...valid,author:''},{...valid,author:'x'.repeat(61)},{...valid,body:'x'.repeat(1201)},{...valid,body:' '},{...valid,id:'bad'},null])assert.equal(validateNote(bad),null);
+assert.equal(validateNote({...valid,color:'unknown'}).color,'peach');
+const env={WALL_GATE_SHA256:'a'.repeat(64),DB:{}};
+const headers={Origin:'http://localhost:8000','X-Archive-Key':'a'.repeat(64),'Content-Type':'application/json'};
+assert.equal((await wallApi(new Request('https://example.test/api/notes',{method:'OPTIONS',headers}),env)).status,204);
+assert.equal((await wallApi(new Request('https://example.test/api/notes',{headers:{...headers,Origin:'https://other.test'}}),env)).status,403);
+assert.equal((await wallApi(new Request('https://example.test/api/notes',{headers:{Origin:'http://localhost:8000'}}),env)).status,401);
+assert.equal((await wallApi(new Request('https://example.test/api/notes',{headers,method:'DELETE'}),env)).status,405);
+assert.equal((await wallApi(new Request('https://example.test/api/notes',{headers,method:'POST',body:'{}'}),env)).status,400);
+assert.equal((await wallApi(new Request('https://example.test/api/notes',{headers,method:'POST',body:'x'.repeat(9000)}),env)).status,413);
+console.log('PASS: note validation, bounds, literal markup, CORS, shared-code authorization, method and request-size checks.');
