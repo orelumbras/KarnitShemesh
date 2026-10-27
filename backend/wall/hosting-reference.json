@@ -1,0 +1,7 @@
+{
+  "project_id": "appgprj_6ae12dee6c748191973f695ea4552064",
+  "endpoint": "https://karnit-shemesh-notes.orel-umbras.chatgpt.site/api/notes",
+  "source_commit": "80e30fc10c4735268fef344fe847ec31c7e62887",
+  "binding": "DB",
+  "secret_names": ["WALL_GATE_SHA256"]
+}
