@@ -8,7 +8,7 @@
  $('.arcade-best-label').textContent='השיא שלכם: '+best+' · שלב '+bestLevel;
  const roadImage=new Image();roadImage.src='assets/arcade/miami-road.webp';
  const colors=['#75d7aa','#ffb277','#ff849f','#8fc7ff','#ffe08c','#c6a0ec'];
- const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('gentle-motion');
+ const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  function round(x,y,width,height,r){ctx.beginPath();ctx.roundRect(x,y,width,height,r)}
  function laneX(lane){return w*(.31+lane*.19)}
  function drawSprite(sprite,x,y,width,height,angle=0){if(!sprite)return false;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(sprite,-width/2,-height/2,width,height);ctx.restore();return true}
