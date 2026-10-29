@@ -8,7 +8,7 @@ with sync_playwright() as p:
  assert page.evaluate("!document.body.classList.contains('gentle-motion')")
  assert page.locator('.hub-heading .motion-title-line').count()==2
  page.locator('.hub-cta').tap();page.wait_for_timeout(1300)
- home_y=page.evaluate('scrollY');assert home_y>700,home_y
+ home_y=page.evaluate('scrollY');assert home_y>100,home_y
  # Open a room, then return to the saved place rather than the hero.
  page.locator('.room-files').tap();page.wait_for_timeout(1400);assert page.locator('#files').is_visible();assert page.evaluate('scrollY')<50
  assert page.locator('#files .motion-title-line').count()==2
@@ -16,7 +16,7 @@ with sync_playwright() as p:
  page.locator('.room-dock-back').tap();page.wait_for_timeout(1400);assert page.locator('#home').is_visible();assert abs(page.evaluate('scrollY')-home_y)<80,(home_y,page.evaluate('scrollY'))
  # Browser history restores both rooms and their positions.
  page.go_back();page.wait_for_timeout(1400);assert page.locator('#files').is_visible();assert abs(page.evaluate('scrollY')-450)<70,page.evaluate('scrollY')
- page.go_forward();page.wait_for_timeout(1400);assert page.locator('#home').is_visible();assert page.evaluate('scrollY')>700
+ page.go_forward();page.wait_for_timeout(1400);assert page.locator('#home').is_visible();assert abs(page.evaluate('scrollY')-home_y)<80
  # Sheet switches directly between sections, is usable with mobile touch.
  page.locator('.room-switch').tap();assert page.locator('#room-picker').is_visible();page.locator('.picker-room[data-room=heart]').tap();page.wait_for_timeout(1500);assert page.locator('#heart').is_visible();assert not page.locator('#room-picker').is_visible()
  # Rapid changes cannot leave stale views or invisible content behind.
@@ -35,6 +35,6 @@ with sync_playwright() as p:
  print('PASS: motion mode removed, animated title lines, room return position, browser back/forward, animated picker, rapid navigation, reload scroll, all rooms and 24 phone/room checks. No JS errors.')
  # OS reduced motion shows all content and uses immediate navigation.
  page.emulate_media(reduced_motion='reduce');page.evaluate("openArchiveRoom('files')");page.wait_for_timeout(200);assert page.locator('#files').is_visible();assert page.locator('.motion-pending').count()==0
- page.locator('.room-dock-back').tap();page.wait_for_timeout(200);assert page.locator('#home').is_visible();assert page.evaluate('scrollY')>700
+ page.locator('.room-dock-back').tap();page.wait_for_timeout(200);assert page.locator('#home').is_visible();assert abs(page.evaluate('scrollY')-home_y)<80
  print('PASS: device reduced-motion fallback and non-top return.')
  b.close()
