@@ -81,5 +81,15 @@ photos: [
 
 Reading text uses the supplied Kammer Regular (400) from assets/fonts; display headings retain Karantina. app-shell.css and app-shell.js provide the compact mobile home, direct shortcuts, a local last-room shortcut, contextual bottom navigation, keyboard-aware dock visibility, bottom-sheet dialogs, and swipe photo navigation. The gallery starts paused and its arrows follow RTL scroll coordinates. Ambient artwork loops are disabled; reveals are shorter and do not repeat when returning to content. Browsers without View Transitions receive a short local entrance instead. Reduced-motion preferences still disable motion.
 
-Validation: JavaScript syntax and Git whitespace checks pass. The existing browser navigation script was updated for the shorter home; browser visual and device checks still need to be run.
+Validation: JavaScript syntax and Git whitespace checks pass. The existing browser navigation script was updated for the shorter home. The later interaction refinement was checked in the in-app browser as described below.
 
+
+## Interaction refinement
+
+`interactions.js` and `interactions.css` own press/release feedback, dialog opening and closing, mobile sheet gestures, and shared motion timing. Dialogs keep their native modal focus behavior and restore focus to their opener; mobile close controls remain visible while scrolling. Short drags spring back, deliberate drags dismiss, and movement during a press cancels its feedback. Reduced motion and background-tab changes cancel active effects.
+
+Room transitions keep the header and dock stationary, avoid replaying an entrance over the incoming screen, and yield to new pointer input. The group content order now puts the intelligence heading before awards and forecasts, and the friendship section before its archive introduction. Text and content are retained.
+
+Photos reserve their intrinsic dimensions. The viewer waits for decoding, reports loading/errors, ignores stale requests, and prepares adjacent photos. Search has a clear action and result count. Filters and quiz results have focused feedback. The game uses a centered canvas with matching drawing dimensions on wide screens and a compact landscape HUD; unchanged HUD values are no longer rewritten repeatedly. Its engine and rules are unchanged.
+
+Validation: eight sections checked at widths 320, 390, 430, 768, and 1280 in the in-app browser, with no horizontal overflow observed. Checked dialog opening/closing, sticky close controls, short/long drag behavior, focus restoration, search/clear, photo decoding and next-photo controls, room picker, browser back/forward, note-form opening/closing without posting, and game start/pause/exit. Game canvas sizes were checked in portrait, landscape, and desktop viewports. No JavaScript warnings or errors were observed. JavaScript syntax checks, Git whitespace checks, and the arcade engine suite passed. Physical-device frame pacing and OS reduced-motion emulation were not measured in this browser session; a fixed 60 FPS rate is not claimed.

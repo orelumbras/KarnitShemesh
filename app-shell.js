@@ -24,4 +24,14 @@
  photo.addEventListener('touchstart',e=>{touch=e.touches.length===1?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null},{passive:true});
  photo.addEventListener('touchend',e=>{if(!touch||e.touches.length){touch=null;return}const point=e.changedTouches[0],dx=point.clientX-touch.x,dy=point.clientY-touch.y;touch=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)document.querySelector(dx>0?'#next-photo':'#prev-photo').click()},{passive:true});
  photo.addEventListener('touchcancel',()=>touch=null,{passive:true});
+ const search=document.querySelector('#search'),field=document.createElement('div'),clear=document.createElement('button'),results=document.createElement('div');
+ field.className='search-field';search.before(field);field.append(search);clear.type='button';clear.className='search-clear';clear.textContent='×';clear.setAttribute('aria-label','ניקוי החיפוש');clear.hidden=true;field.append(clear);
+ results.id='search-results';results.className='search-results';results.setAttribute('role','status');field.append(results);search.setAttribute('aria-describedby',results.id);
+ search.addEventListener('input',()=>{clear.hidden=!search.value;const count=[...document.querySelectorAll('.person')].filter(el=>!el.hidden).length;results.textContent=search.value?count+' תיקים תואמים':''});
+ clear.onclick=()=>{search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));search.focus({preventScroll:true})};
+ const gallery=document.querySelector('#gallery'),count=document.createElement('p');count.className='gallery-count';count.setAttribute('role','status');gallery.before(count);
+ const galleryCount=()=>count.textContent=gallery.children.length+' תמונות באוסף';galleryCount();new MutationObserver(galleryCount).observe(gallery,{childList:true});
+ document.querySelector('#gallery-filters').addEventListener('click',e=>{const button=e.target.closest('button');if(button)button.scrollIntoView({block:'nearest',inline:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'})});
+ const result=document.querySelector('#quiz-result');new MutationObserver(()=>{if(result.textContent)window.archiveFeedback?.(result,[{opacity:.4,translate:'0 5px'},{opacity:1,translate:'0 0'}],{duration:220})}).observe(result,{childList:true,subtree:true});
+ document.querySelector('#future-next').addEventListener('click',()=>{for(const selector of ['#future-name','#future-text'])window.archiveFeedback?.(document.querySelector(selector),[{opacity:.3,translate:'0 8px'},{opacity:1,translate:'0 0'}],{duration:240})});
 })();
