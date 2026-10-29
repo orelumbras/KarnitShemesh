@@ -76,3 +76,10 @@ photos: [
 החזרה לחדר הבקרה משחזרת את מקום בחירת האגפים ולא את הפתיח העליון. מיקומי הגלילה נשמרים ב־sessionStorage ובהיסטוריה של הלשונית, כולל אחורה/קדימה ורענון. במעבר מאגף שנפתח ללא גלילה קודמת בבית, החזרה מכוונת לבחירת האגפים. הלוגו בבית מאפשר לעלות לפתיח. בורר האגפים נפתח כ־dialog עם תמיכה במקלדת ומאפשר מעבר ישיר בין כל האגפים; הוא מוסתר בזמן משחק במסך מלא.
 
 בדיקת דפדפן אופציונלית (לאחר התקנת Python Playwright ודפדפן Chromium): `python tests/navigation.browser.py http://localhost:8000`. הבדיקה מכסה חזרה למקום, אחורה/קדימה, רענון, בחירה מהתפריט, ניווט מהיר, ביטול המצב הישן, כל האגפים ו־24 שילובי רוחב/אגף, וכן העדפת תנועה מופחתת של המכשיר. הבדיקה אינה מפרסמת פתקים בקיר המשותף.
+
+## Mobile app polish
+
+Reading text uses the supplied Kammer Regular (400) from assets/fonts; display headings retain Karantina. app-shell.css and app-shell.js provide the compact mobile home, direct shortcuts, a local last-room shortcut, contextual bottom navigation, keyboard-aware dock visibility, bottom-sheet dialogs, and swipe photo navigation. The gallery starts paused and its arrows follow RTL scroll coordinates. Ambient artwork loops are disabled; reveals are shorter and do not repeat when returning to content. Browsers without View Transitions receive a short local entrance instead. Reduced-motion preferences still disable motion.
+
+Validation: JavaScript syntax and Git whitespace checks pass. The existing browser navigation script was updated for the shorter home; browser visual and device checks still need to be run.
+

@@ -22,12 +22,12 @@ if(session('get')==='yes')revealArchive();
 
 // A moving photo rail, with explicit pause and manual navigation.
 const rail=$('#gallery'), reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
-let autoPlay=!reduceMotion.matches, hovering=false, touching=false, railVisible=false;
+let autoPlay=false, hovering=false, touching=false, railVisible=false;
 const controls=text('div','','gallery-controls');
 const previous=text('button','→ הקודמות','pill'), play=text('button',autoPlay?'השהיית תנועה Ⅱ':'הפעלת תנועה ▷','pill'), next=text('button','הבאות ←','pill');
 controls.append(previous,play,next);rail.before(controls);
 rail.setAttribute('role','region');rail.setAttribute('aria-label','גלריית תמונות נעה');rail.setAttribute('tabindex','0');
-function stepPhoto(direction=1){const item=rail.querySelector('button');if(!item)return;const distance=item.getBoundingClientRect().width+24;const end=rail.scrollWidth-rail.clientWidth;let target=rail.scrollLeft+distance*direction;if(target>end+2)target=0;if(target<0)target=end;rail.scrollTo({left:target,behavior:reduceMotion.matches?'instant':'smooth'})}
+function stepPhoto(direction=1){const item=rail.querySelector('button');if(!item)return;const distance=item.getBoundingClientRect().width+24;const end=rail.scrollWidth-rail.clientWidth;const sign=getComputedStyle(rail).direction==='rtl'?-1:1;let target=rail.scrollLeft*sign+distance*direction;if(target>end+2)target=0;if(target<0)target=end;rail.scrollTo({left:target*sign,behavior:reduceMotion.matches?'instant':'smooth'})}
 previous.onclick=()=>stepPhoto(-1);next.onclick=()=>stepPhoto(1);
 function updatePlay(){play.textContent=autoPlay?'השהיית תנועה Ⅱ':'הפעלת תנועה ▷';play.setAttribute('aria-pressed',String(autoPlay))}play.onclick=()=>{autoPlay=!autoPlay;updatePlay()};updatePlay();
 rail.addEventListener('mouseenter',()=>hovering=true);rail.addEventListener('mouseleave',()=>hovering=false);rail.addEventListener('touchstart',()=>touching=true,{passive:true});rail.addEventListener('touchend',()=>{touching=false;autoPlay=false;updatePlay()},{passive:true});
