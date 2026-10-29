@@ -2,14 +2,14 @@
  'use strict';
  const friends=['אביחי','אוראל','עידן','אגם','יאנקו','איתי'];
  const zones=[['טיילת השקיעה',0],['לילה בעיר',1],['המרינה',2],['שכונת הדקלים',3],['מרכז העיר',8],['הנמל',4],['שדה התעופה',6],['גשר האיים',10],['הביצות',7],['אתר הבנייה',9],['המחלף',5],['רחבת הדריפט',11]];
- function difficulty(level){const n=Math.max(0,Math.floor(level)-1);return {speed:Math.min(.49,.22+n*.022),interval:Math.max(.86,1.95-n*.105),doubleChance:n<2?0:Math.min(.5,.12+(n-2)*.045),duration:66+Math.min(n,11)*3,friendInterval:8.4}}
+ function difficulty(level){const n=Math.max(0,Math.floor(level)-1);return {speed:Math.min(.8,.44+n*.04),interval:Math.max(.58,1.12-n*.06),doubleChance:Math.min(.58,.16+n*.045),duration:66+Math.min(n,11)*3,friendInterval:6.2}}
  function budget(level){return difficulty(level).duration+72}
- function create(seed=Date.now()){return {seed:seed>>>0,lane:1,x:1,elapsed:0,levelElapsed:0,distance:0,progress:0,level:1,left:budget(1),lives:4,score:0,collected:[],totalCollected:0,objects:[],spawn:3.5,friendTimer:1.4,bonusTimer:10,invincible:2,shield:0,slow:0,combo:0,cleared:false,ended:false,reason:null,events:[],serial:0,clearedBonus:0}}
+ function create(seed=Date.now()){return {seed:seed>>>0,lane:1,x:1,elapsed:0,levelElapsed:0,distance:0,progress:0,level:1,left:budget(1),lives:4,score:0,collected:[],totalCollected:0,objects:[],spawn:.6,friendTimer:.9,bonusTimer:7,invincible:2,shield:0,slow:0,combo:0,cleared:false,ended:false,reason:null,events:[],serial:0,clearedBonus:0}}
  function random(s){s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296}
  function move(s,direction){if(!s.ended&&!s.cleared&&Number.isFinite(direction))s.lane=Math.max(0,Math.min(2,s.lane+Math.sign(direction)))}
  function add(s,type,lane,y=-.15,friend=null,extra={}){s.objects.push({id:++s.serial,type,lane,y,friend,passed:false,...extra})}
  function finish(s,reason){if(s.ended)return;s.ended=true;s.reason=reason;s.score+=s.collected.length*100}
- function nextLevel(s){if(!s.cleared||s.ended)return false;s.level++;s.left=budget(s.level)+Math.min(15,Math.floor(s.left*.1));s.lives=Math.min(5,s.lives+1);s.levelElapsed=0;s.distance=0;s.progress=0;s.collected=[];s.objects=[];s.spawn=3.2;s.friendTimer=1.6;s.bonusTimer=9;s.invincible=2.5;s.shield=0;s.slow=0;s.cleared=false;s.combo=0;s.events=[];return true}
+ function nextLevel(s){if(!s.cleared||s.ended)return false;s.level++;s.left=budget(s.level)+Math.min(15,Math.floor(s.left*.1));s.lives=Math.min(5,s.lives+1);s.levelElapsed=0;s.distance=0;s.progress=0;s.collected=[];s.objects=[];s.spawn=.65;s.friendTimer=1;s.bonusTimer=7;s.invincible=2.5;s.shield=0;s.slow=0;s.cleared=false;s.combo=0;s.events=[];return true}
  const hazard=o=>o.type==='car'||o.type==='cone';
  function clearLanes(s,range=.3){return [0,1,2].filter(l=>!s.objects.some(o=>!o.passed&&o.lane===l&&o.y<range&&hazard(o)))}
  function tick(s,delta){

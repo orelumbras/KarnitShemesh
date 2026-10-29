@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),g=require('../arcade-engine.js');
 assert.deepEqual(g.friends,['אביחי','אוראל','עידן','אגם','יאנקו','איתי']);assert.equal(g.zones.length,12);
+assert(g.difficulty(1).speed>=.4);assert(g.difficulty(1).interval<=1.2);assert(g.difficulty(1).doubleChance>0);assert(g.create(1).spawn<1);
 let s=g.create(7);assert.equal(s.left,g.budget(1));assert.equal(s.lives,4);g.move(s,-1);g.move(s,-1);assert.equal(s.lane,0);g.move(s,1);g.move(s,1);g.move(s,1);assert.equal(s.lane,2);
 s=g.create(8);g.add(s,'friend',1,.78,'איתי');g.tick(s,.016);assert.deepEqual(s.collected,['איתי']);assert.equal(s.score,175);g.add(s,'friend',1,.78,'איתי');g.tick(s,.016);assert.equal(s.totalCollected,1);
 s=g.create();s.invincible=0;g.add(s,'car',1,.78);g.tick(s,.016);assert.equal(s.lives,3);g.add(s,'cone',1,.78);g.tick(s,.016);assert.equal(s.lives,3,'collision immunity prevents repeat damage');
@@ -17,8 +18,8 @@ s=g.create();for(let level=1;level<=50;level++){
  assert.equal(s.level,level);for(const name of g.friends)g.add(s,'friend',1,.78,name);s.distance=g.difficulty(level).speed*g.difficulty(level).duration;g.tick(s,.016);assert(s.cleared);assert.equal(s.totalCollected,level*6);
  const score=s.score,time=s.elapsed;g.tick(s,1);assert.equal(s.score,score);assert.equal(s.elapsed,time);assert(g.nextLevel(s));assert.equal(s.collected.length,0);assert.equal(s.objects.length,0);assert.equal(s.distance,0);assert.equal(s.progress,0);assert.equal(s.score,score);assert(s.left>=g.budget(s.level));assert(s.lives<=5);
 }
-for(let level=2;level<=12;level++){assert(g.difficulty(level).speed>g.difficulty(level-1).speed);assert(g.difficulty(level).interval<g.difficulty(level-1).interval);assert(g.difficulty(level).duration>g.difficulty(level-1).duration)}
-assert(g.difficulty(100).speed<=.49);assert(g.difficulty(100).interval>=.86);assert(g.difficulty(100).doubleChance<=.5);
+for(let level=2;level<=10;level++){assert(g.difficulty(level).speed>g.difficulty(level-1).speed);assert(g.difficulty(level).interval<g.difficulty(level-1).interval);assert(g.difficulty(level).duration>g.difficulty(level-1).duration)}
+assert(g.difficulty(100).speed<=.8);assert(g.difficulty(100).interval>=.58);assert(g.difficulty(100).doubleChance<=.58);
 s=g.create();s.left=.01;g.tick(s,.016);assert.equal(s.reason,'time');const score=s.score;g.tick(s,1);assert.equal(s.score,score);assert(!g.nextLevel(s));
 s=g.create();for(let i=0;i<4;i++){s.invincible=0;g.add(s,'car',1,.78);g.tick(s,.016)}assert.equal(s.reason,'crash');
 // Seeded steering uses only the same lane inputs available to a human.
