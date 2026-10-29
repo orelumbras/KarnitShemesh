@@ -1,29 +1,47 @@
-/* Sprite regions use the user's original atlases unchanged. */
+/* Exact crops from the supplied artwork. Directional poses are not walk-cycle frames. */
 'use strict';
 (() => {
- const crew=new Image(),world=new Image();crew.src='assets/arcade/crew-atlas.jpg';world.src='assets/arcade/world-atlas.jpg';
+ function load(src){const image=new Image();let started=false;const promise=new Promise(resolve=>{image.onload=()=>resolve(true);image.onerror=()=>resolve(false)});return {image,promise,start(){if(!started){started=true;image.src=src}}}}
+ const a=load('assets/arcade/crew-atlas.jpg'),b=load('assets/arcade/world-atlas.jpg'),c=load('assets/arcade/world-kit.jpg');
+ const crew=a.image,world=b.image,kit=c.image;
  const layout={
-  'אביחי':{frames:[[14,250,59,115],[77,250,59,115],[139,250,58,115]],face:[14,377,57,61]},
-  'אוראל':{frames:[[283,251,49,115],[336,251,49,115],[390,251,49,115]],face:[283,378,51,60]},
-  'עידן':{frames:[[519,251,51,115],[577,251,51,115],[635,251,51,115]],face:[517,378,53,60]},
-  'אגם':{frames:[[778,250,50,116],[832,250,50,116],[886,250,50,116]],face:[775,377,53,61]},
-  'יאנקו':{frames:[[1016,249,55,117],[1080,249,55,117],[1146,249,55,117]],face:[1015,376,56,62]},
-  'איתי':{frames:[[16,648,62,105],[81,648,62,105],[146,648,62,105]],face:[16,764,60,66]}
+  'אביחי':{body:[17,253,58,112],face:[17,380,48,56]},
+  'אוראל':{body:[283,254,49,112],face:[285,381,46,55]},
+  'עידן':{body:[525,254,47,112],face:[520,381,47,55]},
+  'אגם':{body:[783,253,46,113],face:[779,380,46,56]},
+  'יאנקו':{body:[1022,253,48,112],face:[1018,380,49,56]},
+  'איתי':{body:[19,650,59,104],face:[20,768,51,58]}
  };
- const vehicleRects=[[302,566,58,122],[377,566,59,122],[454,566,59,122],[528,566,59,122],[604,566,59,122],[679,566,59,122],[754,566,59,122],[827,566,59,122],[307,699,61,120],[378,699,61,120],[454,699,61,120],[526,699,61,120],[598,699,61,120],[674,699,61,120],[747,699,61,120],[820,699,61,120],[891,699,61,120]];
- const icons={clock:[510,462,92,103],clock30:[609,462,94,103],shield:[973,464,93,100],slow:[858,465,88,97],cone:[1192,741,82,86]};
- const cache=new Map();
- // Background removal is a one-time edge flood-fill when reading each sprite.
- // It keeps enclosed dark windows and outlines; no work is done per animation frame.
- function region(rect,transparent=false){const key=rect.join(',')+transparent;if(cache.has(key))return cache.get(key);const [x,y,w,h]=rect,c=document.createElement('canvas');c.width=w;c.height=h;const cx=c.getContext('2d',{willReadFrequently:true});cx.drawImage(crew,x,y,w,h,0,0,w,h);
-  if(transparent){const image=cx.getImageData(0,0,w,h),p=image.data;const samples=[[1,1],[w-2,1],[1,h-2],[w-2,h-2]].map(([xx,yy])=>[p[(yy*w+xx)*4],p[(yy*w+xx)*4+1],p[(yy*w+xx)*4+2]]);samples.sort((a,b)=>a.reduce((s,n)=>s+n,0)-b.reduce((s,n)=>s+n,0));const bg=samples[1],tolerance=Math.max(...bg)>70?56:27,seen=new Uint8Array(w*h),stack=[];for(let xx=0;xx<w;xx++){stack.push(xx,(h-1)*w+xx)}for(let yy=0;yy<h;yy++){stack.push(yy*w,yy*w+w-1)}while(stack.length){const i=stack.pop();if(seen[i])continue;seen[i]=1;const k=i*4;if(Math.max(Math.abs(p[k]-bg[0]),Math.abs(p[k+1]-bg[1]),Math.abs(p[k+2]-bg[2]))>tolerance)continue;p[k+3]=0;const xx=i%w,yy=Math.floor(i/w);if(xx>0)stack.push(i-1);if(xx<w-1)stack.push(i+1);if(yy>0)stack.push(i-w);if(yy<h-1)stack.push(i+w)}cx.putImageData(image,0,0)}cache.set(key,c);return c;
+ const cars=[[304,569,63,115],[378,569,64,115],[453,569,65,115],[529,569,65,115],[604,569,65,115],[679,569,64,115],[754,569,65,115],[829,569,64,115],[308,700,59,119],[373,700,58,119],[435,700,58,119],[498,700,58,119],[560,700,58,119],[623,700,58,119],[685,700,58,119],[748,700,58,119],[810,700,58,119],[873,700,58,119],[936,700,64,119]];
+ const icons={clock:[513,468,88,92],clock30:[613,468,88,92],slow:[976,468,82,95],cone:[1198,744,74,79]};
+ const props={palm:[746,324,64,110],palm2:[813,325,68,112],hotel:[1024,113,130,231],building:[1159,113,115,231],billboard:[1027,549,164,112],sand:[12,778,49,61],paving:[204,783,46,53],water:[405,782,44,53],grass:[76,778,49,61]};
+ const cache=new Map(),faces=new Map();
+ function region(image,rect,alpha=false){
+  if(!image.naturalWidth)return null;const key=image.src+rect.join(',')+alpha;if(cache.has(key))return cache.get(key);
+  const [x,y,w,h]=rect,canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{willReadFrequently:alpha});ctx.drawImage(image,x,y,w,h,0,0,w,h);
+  if(alpha){
+   const data=ctx.getImageData(0,0,w,h),p=data.data,seen=new Uint8Array(w*h),stack=[];
+   const samples=[[1,1],[w-2,1],[1,h-2],[w-2,h-2]].map(([x,y])=>{const k=(y*w+x)*4;return [p[k],p[k+1],p[k+2]]});samples.sort((a,b)=>Math.max(...a)-Math.max(...b));const bg=samples[1];
+   // Tight color matching preserves black outlines, trousers, tires and windows.
+   for(let x=0;x<w;x++)stack.push(x,(h-1)*w+x);for(let y=0;y<h;y++)stack.push(y*w,y*w+w-1);
+   while(stack.length){const i=stack.pop();if(seen[i])continue;seen[i]=1;const k=i*4;if(Math.max(Math.abs(p[k]-bg[0]),Math.abs(p[k+1]-bg[1]),Math.abs(p[k+2]-bg[2]))>15)continue;p[k+3]=0;const x=i%w,y=(i/w)|0;if(x)stack.push(i-1);if(x<w-1)stack.push(i+1);if(y)stack.push(i-w);if(y<h-1)stack.push(i+w)}
+   // Keep the single connected figure; discard atlas dividers and neighboring fragments.
+   const visited=new Uint8Array(w*h),queue=new Int32Array(w*h);let largest=[];
+   for(let start=0;start<w*h;start++){if(visited[start]||!p[start*4+3])continue;let head=0,tail=1;queue[0]=start;visited[start]=1;while(head<tail){const i=queue[head++],x=i%w,y=(i/w)|0;for(const n of [x?i-1:-1,x<w-1?i+1:-1,y?i-w:-1,y<h-1?i+w:-1]){if(n<0||visited[n]||!p[n*4+3])continue;visited[n]=1;queue[tail++]=n}}if(tail>largest.length)largest=Array.from(queue.subarray(0,tail))}
+   const keep=new Uint8Array(w*h);for(const i of largest)keep[i]=1;for(let i=0;i<w*h;i++)if(!keep[i])p[i*4+3]=0;ctx.putImageData(data,0,0);
+   let left=w,top=h,right=0,bottom=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(p[(y*w+x)*4+3]){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y)}
+   if(right>left&&bottom>top){const trimmed=document.createElement('canvas');trimmed.width=right-left+1;trimmed.height=bottom-top+1;trimmed.getContext('2d').drawImage(canvas,left,top,trimmed.width,trimmed.height,0,0,trimmed.width,trimmed.height);cache.set(key,trimmed);return trimmed}
+  }
+  cache.set(key,canvas);return canvas;
  }
- const ready=Promise.all([new Promise(resolve=>{crew.onload=resolve;crew.onerror=resolve}),new Promise(resolve=>{world.onload=resolve;world.onerror=resolve})]);
- window.KarnitSprites={ready,crew,world,layout,
-  face(name){return crew.complete&&crew.naturalWidth&&layout[name]?region(layout[name].face).toDataURL():null},
-  person(name,frame){return crew.complete&&crew.naturalWidth&&layout[name]?region(layout[name].frames[frame%3],true):null},
-  car(index){return crew.complete&&crew.naturalWidth?region(vehicleRects[index%vehicleRects.length],true):null},
-  icon(name){return crew.complete&&crew.naturalWidth&&icons[name]?region(icons[name],true):null},
+ const api={crew,world,kit,layout,load(){a.start();b.start();c.start()},
+  face(name){if(!layout[name]||!crew.naturalWidth)return null;if(!faces.has(name))faces.set(name,region(crew,layout[name].face).toDataURL());return faces.get(name)},
+  person(name){return layout[name]?region(crew,layout[name].body,true):null},
+  car(index){return region(crew,cars[((index%cars.length)+cars.length)%cars.length],true)},
+  icon(name){return icons[name]?region(crew,icons[name],true):null},
+  prop(name){return props[name]?region(kit,props[name],!['sand','paving','water','grass'].includes(name)):null},
   scene(index){const col=index%4,row=Math.floor(index/4);return [col*320+4,row*278+4,312,row===2?288:260]}
  };
+ api.ready=Promise.all([a.promise,b.promise,c.promise]).then(results=>{for(const name of Object.keys(layout)){api.face(name);api.person(name)}for(let i=0;i<cars.length;i++)api.car(i);for(const name of Object.keys(icons))api.icon(name);for(const name of Object.keys(props))api.prop(name);return results.every(Boolean)});
+ window.KarnitSprites=api;
 })();
