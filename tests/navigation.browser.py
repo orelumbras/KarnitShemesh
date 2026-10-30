@@ -33,8 +33,9 @@ with sync_playwright() as p:
  page.locator('.room-switch').tap();page.wait_for_timeout(500);page.screenshot(path='/tmp/motion-picker.png');page.locator('.picker-close').tap();page.wait_for_timeout(400)
  assert not errors,errors
  print('PASS: motion mode removed, animated title lines, room return position, browser back/forward, animated picker, rapid navigation, reload scroll, all rooms and 24 phone/room checks. No JS errors.')
- # OS reduced motion shows all content and uses immediate navigation.
+ # OS reduced motion restores the current home position after viewport changes.
+ reduced_home_y=page.evaluate('scrollY')
  page.emulate_media(reduced_motion='reduce');page.evaluate("openArchiveRoom('files')");page.wait_for_timeout(200);assert page.locator('#files').is_visible();assert page.locator('.motion-pending').count()==0
- page.locator('.room-dock-back').tap();page.wait_for_timeout(200);assert page.locator('#home').is_visible();assert abs(page.evaluate('scrollY')-home_y)<80
+ page.locator('.room-dock-back').tap();page.wait_for_timeout(200);assert page.locator('#home').is_visible();assert abs(page.evaluate('scrollY')-reduced_home_y)<80,(reduced_home_y,page.evaluate('scrollY'))
  print('PASS: device reduced-motion fallback and non-top return.')
  b.close()

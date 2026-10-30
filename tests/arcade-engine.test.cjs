@@ -1,44 +1,57 @@
-const assert=require('node:assert/strict'),g=require('../arcade-engine.js');
+const assert=require('node:assert/strict');
+const g=require('../arcade-engine.js');
+const quiet=s=>{s.rowDistance=Infinity;s.objects=[];return s};
+const frames=(s,n)=>{for(let i=0;i<n;i++)g.tick(s);return s};
+assert.equal(g.version,'crew-rush-1');assert.equal(g.DT,1/60);assert.equal(g.MAX_STEPS,54000);
 assert.deepEqual(g.friends,['אביחי','אוראל','עידן','אגם','יאנקו','איתי']);assert.equal(g.zones.length,12);
-assert(g.difficulty(1).speed>=.4);assert(g.difficulty(1).interval<=1.2);assert(g.difficulty(1).doubleChance>0);assert(g.create(1).spawn<1);
-let s=g.create(7);assert.equal(s.left,g.budget(1));assert.equal(s.lives,4);g.move(s,-1);g.move(s,-1);assert.equal(s.lane,0);g.move(s,1);g.move(s,1);g.move(s,1);assert.equal(s.lane,2);
-s=g.create(8);g.add(s,'friend',1,.78,'איתי');g.tick(s,.016);assert.deepEqual(s.collected,['איתי']);assert.equal(s.score,175);g.add(s,'friend',1,.78,'איתי');g.tick(s,.016);assert.equal(s.totalCollected,1);
-s=g.create();s.invincible=0;g.add(s,'car',1,.78);g.tick(s,.016);assert.equal(s.lives,3);g.add(s,'cone',1,.78);g.tick(s,.016);assert.equal(s.lives,3,'collision immunity prevents repeat damage');
-s=g.create();s.left=10;g.add(s,'clock',1,.78,null,{bonus:30});g.tick(s,.016);assert(s.left>39.9);assert.equal(s.score,75);
-s=g.create();g.add(s,'shield',1,.78);g.tick(s,.016);assert(s.shield>0);s.invincible=0;g.add(s,'car',1,.78);g.tick(s,.016);assert.equal(s.lives,4);assert.equal(s.shield,0);
-s=g.create();g.add(s,'slow',1,.78);g.tick(s,.016);assert(s.slow>0);
-s=g.create();s.collected=g.friends.filter(n=>n!=='איתי');g.add(s,'friend',0,.935,'איתי');g.tick(s,.05);assert(s.events.some(e=>e.type==='miss'&&e.name==='איתי'));s.friendTimer=0;g.tick(s,.016);assert(s.objects.some(o=>o.type==='friend'&&o.friend==='איתי'),'a missed friend returns instead of making the level unwinnable');
-// Six early pickups cannot skip the drive to the destination.
-s=g.create();for(const name of g.friends)g.add(s,'friend',1,.78,name);g.tick(s,.016);assert.equal(s.collected.length,6);assert(!s.cleared);s.objects=[];s.spawn=s.friendTimer=s.bonusTimer=Infinity;
-for(let i=0;i<60*64;i++)g.tick(s,1/60);assert(!s.cleared,'first trip lasts at least 66 seconds');while(!s.cleared)g.tick(s,1/60);assert(s.levelElapsed>=66&&s.levelElapsed<67);
-// Driving the full route without the crew cannot complete the level either.
-s=g.create();s.spawn=s.friendTimer=s.bonusTimer=Infinity;for(let i=0;i<60*67;i++)g.tick(s,1/60);assert.equal(s.progress,1);assert(!s.cleared);for(const name of g.friends)g.add(s,'friend',1,.78,name);g.tick(s,.016);assert(s.cleared);
-// Progression preserves the run, rewards each clear once, and resets the next trip.
-s=g.create();for(let level=1;level<=50;level++){
- assert.equal(s.level,level);for(const name of g.friends)g.add(s,'friend',1,.78,name);s.distance=g.difficulty(level).speed*g.difficulty(level).duration;g.tick(s,.016);assert(s.cleared);assert.equal(s.totalCollected,level*6);
- const score=s.score,time=s.elapsed;g.tick(s,1);assert.equal(s.score,score);assert.equal(s.elapsed,time);assert(g.nextLevel(s));assert.equal(s.collected.length,0);assert.equal(s.objects.length,0);assert.equal(s.distance,0);assert.equal(s.progress,0);assert.equal(s.score,score);assert(s.left>=g.budget(s.level));assert(s.lives<=5);
-}
-for(let level=2;level<=10;level++){assert(g.difficulty(level).speed>g.difficulty(level-1).speed);assert(g.difficulty(level).interval<g.difficulty(level-1).interval);assert(g.difficulty(level).duration>g.difficulty(level-1).duration)}
-assert(g.difficulty(100).speed<=.8);assert(g.difficulty(100).interval>=.58);assert(g.difficulty(100).doubleChance<=.58);
-s=g.create();s.left=.01;g.tick(s,.016);assert.equal(s.reason,'time');const score=s.score;g.tick(s,1);assert.equal(s.score,score);assert(!g.nextLevel(s));
-s=g.create();for(let i=0;i<4;i++){s.invincible=0;g.add(s,'car',1,.78);g.tick(s,.016)}assert.equal(s.reason,'crash');
-// Seeded steering uses only the same lane inputs available to a human.
-let clears=0,first=[];
-for(let seed=1;seed<=20;seed++){
- const run=g.create(seed);
- for(let frame=0;frame<60*300&&!run.ended;frame++){
-  if(run.cleared){if(run.level===1)first.push(run.levelElapsed);clears++;g.nextLevel(run)}
-  let target=run.lane,best=-Infinity;
-  for(let lane=0;lane<3;lane++){
-   let utility=-Math.abs(lane-run.x)*2;
-   for(const o of run.objects){if(o.passed||o.lane!==lane)continue;if(['car','cone'].includes(o.type)&&o.y>.55&&o.y<.90)utility-=120*(1-Math.abs(o.y-.79));if(o.type==='friend'&&o.y>.17&&o.y<.865)utility+=45*o.y}
-   if(utility>best){best=utility;target=lane}
+let s=quiet(g.create(7));assert.equal(s.lives,3);assert(!('left'in s));assert(!('progress'in s));
+g.tick(s,.5);assert.equal(s.tick,1);assert.equal(s.elapsed,1/60,'simulation always advances one fixed step');
+g.move(s,-1);g.move(s,-1);assert.equal(s.lane,0);g.move(s,Infinity);assert.equal(s.lane,0);g.move(s,1);g.move(s,1);g.move(s,1);assert.equal(s.lane,2);
+// Actual collisions cost one of three lives; repeated contact does not instantly kill.
+s=quiet(g.create(8));s.invincible=0;g.add(s,'car',1,.79);g.tick(s);assert.equal(s.lives,2);g.add(s,'cone',1,.79);g.tick(s);assert.equal(s.lives,2);frames(s,64);s.objects=[];g.add(s,'car',1,.79);g.tick(s);assert.equal(s.lives,1);frames(s,64);s.objects=[];g.add(s,'car',1,.79);g.tick(s);assert(s.ended);assert.equal(s.reason,'crash');const ended=JSON.stringify(s);g.tick(s);g.move(s,-1);g.boost(s,true);assert.equal(JSON.stringify(s),ended);
+// Shields are single-hit protection, never an endlessly refreshed timer.
+s=quiet(g.create(2));g.add(s,'shield',1,.79);g.tick(s);assert.equal(s.shield,1);s.invincible=0;g.add(s,'car',1,.79);g.tick(s);assert.equal(s.lives,3);assert.equal(s.shield,0);assert(s.events.some(e=>e.type==='blocked'));
+// Six DISTINCT pickups deliver automatically without a pause, free life or reset.
+s=quiet(g.create(5));g.add(s,'friend',1,.79,g.friends[0]);g.tick(s);g.add(s,'friend',1,.79,g.friends[0]);g.tick(s);assert.equal(s.totalCollected,1);
+for(const name of g.friends.slice(1)){g.add(s,'friend',1,.79,name);g.tick(s)}
+assert.equal(s.totalCollected,6);assert.equal(s.deliveries,1);assert.deepEqual(s.lastDelivery,g.friends);assert.equal(s.collected.length,0);assert(!s.ended);assert.equal(s.lives,3);assert(s.events.some(e=>e.type==='delivery'));const afterSet=s.score;g.add(s,'friend',1,.79,g.friends[0]);g.tick(s);assert.equal(s.totalCollected,7);assert(s.score>afterSet);
+s.combo=12;s.multiplier=4;g.add(s,'friend',0,.95,'יאנקו');g.tick(s);assert.equal(s.combo,0);assert.equal(s.multiplier,1);assert(s.events.some(e=>e.type==='miss'));
+// A genuinely close pass earns streak points; distant traffic gives no near bonus.
+s=quiet(g.create(8));s.invincible=0;g.add(s,'car',2,.95,null,{closest:1.4});g.tick(s);assert(!s.events.some(e=>e.type==='near'));g.add(s,'car',0,.95,null,{closest:.64});g.tick(s);assert(s.events.some(e=>e.type==='near'));assert.equal(s.combo,1);
+// Boost trades safety/recharge for speed and doubled distance points.
+const boosted=quiet(g.create(1)),normal=quiet(g.create(1));g.boost(boosted,true);frames(boosted,100);frames(normal,100);assert(boosted.distance>normal.distance*1.35);assert(boosted.score>normal.score*2);assert(boosted.boostCharge<50);frames(boosted,100);assert(boosted.boostLocked);assert(!boosted.boosting);g.boost(boosted,false);frames(boosted,150);assert(boosted.boostCharge>=20);assert(!boosted.boostLocked);g.add(boosted,'nitro',1,.79);g.tick(boosted);assert(boosted.events.some(e=>e.type==='nitro'));
+// The road becomes harder without waiting for a finish line.
+s=quiet(g.create(9));frames(s,1080);assert.equal(s.level,2);s.deliveries=4;g.tick(s);assert.equal(s.level,4);
+for(let level=2;level<=11;level++){assert(g.difficulty(level).speed>g.difficulty(level-1).speed);assert(g.difficulty(level).interval<g.difficulty(level-1).interval);assert(g.difficulty(level).doubleChance>g.difficulty(level-1).doubleChance)}
+assert(g.difficulty(999).speed<=1.08);assert(g.difficulty(999).gap>=.365);assert(g.difficulty(999).doubleChance<1);
+// Idle play loses quickly: surviving and collecting requires continuous decisions.
+const idleTimes=[];for(let seed=1;seed<=30;seed++){s=g.create(seed);while(!s.ended&&s.tick<60*25)g.tick(s);assert(s.ended,'a parked player must not survive indefinitely');idleTimes.push(s.elapsed);assert.equal(s.reason,'crash')}
+assert(Math.max(...idleTimes)<15);
+// A human-style controller uses only legal one-lane input, with a 117ms decision
+// interval. It can read the road, collect complete crews and reach the hard tier.
+function drive(seed,seconds=180){
+ const run=g.create(seed),actions=[];
+ while(!run.ended&&run.tick<60*seconds){
+  if(run.tick%7===0){let target=run.lane,best=-Infinity;
+   for(let lane=0;lane<3;lane++){
+    let utility=-Math.abs(lane-run.x)*1.5;
+    for(const o of run.objects){if(o.passed)continue;const dx=Math.abs(lane-o.lane);if(['car','cone'].includes(o.type)&&o.y>.37&&o.y<.94&&dx<.5)utility-=120*(1-Math.abs(o.y-.79));if(o.type==='friend'&&o.y>.1&&o.y<.88&&dx<.5)utility+=25*o.y}
+    if(utility>best){best=utility;target=lane}
+   }
+   if(target!==run.lane){const action={t:run.tick,k:'m',v:Math.sign(target-run.lane)};actions.push(action);g.move(run,action.v)}
   }
-  g.move(run,target-run.lane);g.tick(run,1/60);
-  assert(run.objects.length<35);assert(run.lives>=0&&run.lives<=5);assert(run.lane>=0&&run.lane<=2);assert(run.progress>=0&&run.progress<=1);assert.equal(new Set(run.collected).size,run.collected.length);
+  g.tick(run);assert(run.objects.length<25);assert(run.lives>=0&&run.lives<=3);assert.equal(new Set(run.collected).size,run.collected.length);
   const pending=run.objects.filter(o=>o.type==='friend'&&!o.passed);assert.equal(new Set(pending.map(o=>o.friend)).size,pending.length);
+  // Each generated traffic row has a free lane and no friend hidden in a car.
+  const row=run.objects.filter(o=>o.row===run.row&&!o.passed),hazards=row.filter(o=>['car','cone'].includes(o.type));assert(hazards.length<=2);for(const pickup of row.filter(o=>!['car','cone'].includes(o.type)))assert(!hazards.some(o=>o.lane===pickup.lane));
  }
+ return {run,actions};
 }
-assert.equal(first.length,20,'all seeded drivers can finish the opening trip');assert(first.every(t=>t>=66&&t<100));assert(clears>=60,'ordinary steering must progress through multiple longer trips');
-console.log('PASS: route + six-person objective, minimum trip length, missed-crew recovery, pickups, immunity, bounded difficulty, 50 consecutive synthetic levels, time/crash endings.');
-console.log('PASS: '+clears+' naturally spawned trips across 20 seeded drivers; first-trip duration '+Math.min(...first).toFixed(1)+'–'+Math.max(...first).toFixed(1)+' seconds.');
+let sets=0,minSurvival=Infinity;for(let seed=1;seed<=20;seed++){const {run}=drive(seed);sets+=run.deliveries;minSurvival=Math.min(minSurvival,run.elapsed);assert(run.elapsed>100);assert(run.deliveries>=10);assert(run.level>=8)}
+const {run,actions}=drive(3);assert(run.ended,'known seed finishes naturally for the replay fixture');const replay=g.replay(3,actions,run.tick);assert.deepEqual(replay,run,'server replay reproduces every exact state field and score');
+const mixed=[{t:0,k:'b',v:1},{t:15,k:'m',v:-1},{t:50,k:'b',v:0},{t:70,k:'m',v:1}];s=g.create(10);for(let i=0;i<150;i++){for(const a of mixed.filter(a=>a.t===s.tick)){if(a.k==='m')g.move(s,a.v);else g.boost(s,a.v===1)}g.tick(s)}assert.deepEqual(g.replay(10,mixed,150),s);
+for(const bad of [[{t:-1,k:'m',v:1}],[{t:5,k:'m',v:0}],[{t:2,k:'b',v:true}],[{t:8,k:'m',v:1},{t:7,k:'m',v:-1}],[{t:100,k:'m',v:1}],[{t:4,k:'teleport',v:1}]])assert.throws(()=>g.replay(1,bad,100),RangeError);
+assert.throws(()=>g.replay(1,Array(6001).fill({t:0,k:'m',v:1}),100),RangeError);assert.throws(()=>g.replay(1,Array(5).fill({t:0,k:'m',v:1}),100),RangeError);assert.throws(()=>g.replay(-1,[],100),RangeError);assert.throws(()=>g.replay(1,[],0),RangeError);assert.throws(()=>g.replay(3,actions,run.tick+1),/steps_after_end/);
+s=quiet(g.create(4));frames(s,g.MAX_STEPS);assert(s.ended);assert.equal(s.reason,'complete');assert.equal(s.elapsed,900);assert.equal(s.tick,g.MAX_STEPS);
+console.log('PASS: deterministic 60Hz simulation, escalating endless traffic, three lives, shields, six-person automatic deliveries, misses, close passes, boost exhaustion/recharge, 15min cap and strict server replay.');
+console.log('PASS: 30 idle drivers die in '+Math.min(...idleTimes).toFixed(1)+'–'+Math.max(...idleTimes).toFixed(1)+'s; 20 legal seeded drivers survive at least '+minSurvival.toFixed(1)+'s and deliver '+sets+' crews.');
