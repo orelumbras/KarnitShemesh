@@ -32,8 +32,6 @@ body :is(blockquote,.wall-note-body,.daily-quote blockquote){font-size:20px!impo
 @media(hover:hover) and (pointer:fine){.hub-quick a:hover{background:#73526e}.room-card:hover{transform:translateY(-3px)}}
 @media(hover:none){.room-card:hover{translate:none}.room-card:active,.person:active,.hub-quick a:active{transform:scale(.985)}}
 dialog:not(#room-picker){border-radius:24px;scrollbar-width:thin}.close,.picker-close{min-width:44px;min-height:44px}.sheet-lock{overflow:hidden}.keyboard-open .room-dock{display:none}
-::view-transition-group(archive-scene){animation-duration:360ms}::view-transition-new(root){animation-duration:220ms}::view-transition-old(root){animation-duration:160ms}
-.route-arriving{animation:shell-arrive 240ms var(--shell-ease) both}@keyframes shell-arrive{from{opacity:.25;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(max-width:700px){
  html{scroll-padding-top:82px}.hub-enabled .nav{min-height:62px;padding:8px 18px;gap:12px;flex-wrap:nowrap}.hub-enabled .nav nav{display:none!important}.hub-enabled .nav .brand{font-size:29px}.hub-enabled .nav .brand span{display:none}.hub-enabled .nav #logout{margin-inline-start:auto}
  .hub-welcome{min-height:0;padding:62px 20px 28px}.hub-topline{top:16px;gap:12px}.hub-live{font-size:11px}.hub-heading{padding:18px 0 8px}.hub-heading h1{margin-block:18px 24px}.hub-heading p{max-width:310px;margin-inline:auto}.hub-cta{margin-top:20px;font-size:15px!important;padding:12px 20px}.hub-edition,.hub-hero-bottom{display:none}.hub-quick{margin-top:16px}.hub-quick a{font-size:13px!important;padding:9px 14px}
