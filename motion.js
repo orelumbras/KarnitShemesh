@@ -1,37 +1,41 @@
+/* One motion vocabulary for routes, sheets, feedback and content entrances. */
 'use strict';
 (() => {
- const reduce=matchMedia('(prefers-reduced-motion: reduce)'),main=document.querySelector('#main'),archive=document.querySelector('#archive');
- let held=false,activeRoom=null;const seen=new WeakSet(),prepared=new WeakSet(),counters=new WeakSet(),running=new Set(),pending=new Set();
- const selected='.hub-kicker,.hub-heading h1,.hub-heading>p,.hub-cta,.hub-topline,.hub-edition,.hub-hero-bottom,.hub-stats>div,.daily-heading,.daily-quote,.hub-directory-heading,.room-card,.section-cover .eyebrow,.section-cover h2,.section-cover .section-heading>p,.person,.search-label,.search,.gallery-controls,.filters,.gallery>button,.chat-stats>article,.chat-method,.archive-activity,.activity-row,.sticker-board,.award-row,.future>div,.heart>p,.heart>blockquote,.heart>span,.wall-toolbar,.wall-status,.wall-note,.wall-footnote,.arcade-intro-copy>.eyebrow,.arcade-intro h2,.arcade-intro-copy>p,.arcade-intro-crew,.arcade-start,.arcade-legend,.quote-game,.date-prize';
- function candidates(root){return [...root.querySelectorAll(selected)].filter(el=>!el.closest('.arcade-stage')&&!el.closest('[hidden]')&&!el.closest('.motion-item'))}
- function visible(el){if(!el.isConnected||el.closest('[hidden]'))return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight-10&&r.right>0&&r.left<innerWidth}
- function animate(el,frames,options){if(reduce.matches||!el.animate)return null;const a=el.animate(frames,options);running.add(a);a.finished.catch(()=>{}).finally(()=>running.delete(a));return a}
+ const preference=matchMedia('(prefers-reduced-motion: reduce)'),main=document.querySelector('#main'),archive=document.querySelector('#archive');
+ const ease='cubic-bezier(.22,1,.36,1)',durations=Object.freeze({press:100,release:220,route:360,sheet:360,close:260,reveal:380});
+ const running=new Set(),seen=new WeakSet(),prepared=new WeakSet(),entered=new Set(),pending=new Set();let held=false;
+ function animate(el,frames,options={}){if(preference.matches||document.hidden||!el?.animate)return null;const a=el.animate(frames,{duration:durations.reveal,easing:ease,...options});running.add(a);a.finished.catch(()=>{}).finally(()=>running.delete(a));return a}
+ window.ArchiveMotion=Object.freeze({ease,durations,animate});
+ const selector='.hub-kicker,.hub-heading h1,.hub-heading>p,.hub-cta,.hub-quick,.hub-topline,.hub-directory-heading,.room-card,.person,.search-field,.gallery-controls,.filters,.gallery>button,.chat-stats>article,.chat-method,.archive-activity,.activity-row,.sticker-board,.award-row,.future>div,.heart>p,.heart>blockquote,.heart>span,.wall-toolbar,.wall-note,.wall-footnote,.arcade-intro-copy>.eyebrow,.arcade-intro h2,.arcade-intro-copy>p,.arcade-intro-crew,.arcade-start,.arcade-rules,.arcade-leaderboard,.quote-game,.date-prize';
+ function visible(el){if(!el.isConnected||el.closest('[hidden],[inert]'))return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight-12&&r.right>0&&r.left<innerWidth}
  function titleLines(el){if(!el.matches('h1,h2')||el.dataset.motionLines)return;el.dataset.motionLines='true';const lines=[];let line=document.createElement('span');line.className='motion-title-line';for(const node of [...el.childNodes]){if(node.nodeName==='BR'){lines.push(line);line=document.createElement('span');line.className='motion-title-line'}else line.append(node)}lines.push(line);el.replaceChildren(...lines)}
- function register(el){if(prepared.has(el))return;prepared.add(el);titleLines(el);observer.observe(el)}
- function count(el){
-  if(counters.has(el)||reduce.matches)return;const text=el.textContent.trim();if(!/^[0-9,]+$/.test(text))return;
-  const value=Number(text.replaceAll(',',''));if(value<10)return;counters.add(el);
-  const start=performance.now(),formatter=new Intl.NumberFormat('he-IL');let id,lastPaint=0;
-  const cancel=()=>{cancelAnimationFrame(id);el.textContent=text;counterCancels.delete(cancel)};
-  const tick=now=>{if(reduce.matches||document.hidden||el.closest('[hidden]')){cancel();return}const p=Math.min(1,(now-start)/620);if(now-lastPaint>=48||p===1){el.textContent=formatter.format(Math.round(value*(1-Math.pow(1-p,3))));lastPaint=now}if(p<1)id=requestAnimationFrame(tick);else cancel()};
-  counterCancels.add(cancel);id=requestAnimationFrame(tick);
+ function reveal(el,i=0){if(!visible(el))return;seen.add(el);observer.unobserve(el);pending.delete(el);animate(el,[{opacity:0,translate:'0 12px'},{opacity:1,translate:'0 0'}],{delay:Math.min(i*35,105)})}
+ const observer=new IntersectionObserver(entries=>{
+  const incoming=entries.filter(e=>e.isIntersecting&&!seen.has(e.target)&&visible(e.target));
+  if(held){incoming.forEach(e=>pending.add(e.target));return}
+  incoming.forEach((e,i)=>reveal(e.target,i%4));
+ },{threshold:.04,rootMargin:'0px 0px -12px 0px'});
+ function register(el){if(prepared.has(el)||el.closest('.arcade-stage'))return;prepared.add(el);titleLines(el);observer.observe(el)}
+ function scan(root){if(root.matches?.(selector))register(root);root.querySelectorAll(selector).forEach(register);root.querySelectorAll('h1,h2').forEach(titleLines)}
+ function prepare(id){const root=document.querySelector('.archive-page[data-room="'+id+'"]')||document.getElementById(id);if(root)scan(root)}
+ function enter(id,options={}){
+  const root=document.querySelector('.archive-page[data-room="'+id+'"]')||document.getElementById(id);if(!root||archive.hidden)return;scan(root);
+  if(options.route){
+   // Surface motion leads; only a first visit gets the small coordinated cover entrance.
+   const cover=root.querySelector('.section-cover,.arcade-intro,.hub-welcome');
+   if(!entered.has(id)&&!options.backwards&&cover){const heading=cover.querySelector('h1,h2'),description=cover.querySelector('.section-heading>p,.arcade-intro-copy>p,.hub-heading>p');
+    if(heading)animate(heading,[{opacity:.3,translate:'0 10px'},{opacity:1,translate:'0 0'}],{duration:durations.route,delay:35});
+    if(description)animate(description,[{opacity:.2,translate:'0 7px'},{opacity:1,translate:'0 0'}],{duration:280,delay:70});
+   }
+   root.querySelectorAll(selector).forEach(el=>{const r=el.getBoundingClientRect();if(r.top<innerHeight&&r.bottom>0){seen.add(el);observer.unobserve(el);pending.delete(el)}});entered.add(id);return;
+  }
+  root.querySelectorAll(selector).forEach((el,i)=>{if(!seen.has(el)&&visible(el))reveal(el,i%4)});entered.add(id);pending.clear();
  }
- const counterCancels=new Set();
- function reveal(el,index=0){pending.delete(el);el.classList.remove('motion-pending');if(!visible(el)||reduce.matches)return;seen.add(el);observer.unobserve(el);if(el.matches('h1,h2')){el.querySelectorAll('.motion-title-line').forEach((line,i)=>animate(line,[{opacity:0,translate:'0 16px',rotate:'0deg'},{opacity:1,translate:'0 0',rotate:'0deg'}],{duration:360,delay:index*25+i*55,easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'}))}else{animate(el,[{opacity:0,translate:'0 14px',scale:el.matches('.room-card,.person,.wall-note')?'.975':'1'},{opacity:1,translate:'0 0',scale:'1'}],{duration:el.matches('.room-card,.person')?360:400,delay:Math.min(index*25,100),easing:'cubic-bezier(.16,1,.3,1)',fill:'backwards'})}
-  if(el.matches('.hub-stats>div,.chat-stats>article,.activity-row'))el.querySelectorAll('strong').forEach(count);
- }
- const observer=new IntersectionObserver(entries=>{const incoming=entries.filter(e=>e.isIntersecting&&!seen.has(e.target));if(held){incoming.forEach(e=>pending.add(e.target));return}incoming.forEach((e,i)=>reveal(e.target,i%6))},{threshold:.06,rootMargin:'0px 0px -16px 0px'});
- const scenes=new IntersectionObserver(entries=>{entries.forEach(e=>e.target.dataset.motionVisible=String(e.isIntersecting&&!document.hidden))},{threshold:.05});
- const sceneSelector='.hub-welcome,.section-cover,.room-card,.primary,.hub-cta';const knownScenes=new WeakSet();
- function scan(root){candidates(root).forEach(register);root.querySelectorAll(sceneSelector).forEach(el=>{if(!knownScenes.has(el)){knownScenes.add(el);scenes.observe(el)}})}
- function prepare(id){activeRoom=id;const root=document.getElementById(id);if(!root)return;scan(root);const items=candidates(root);for(const el of items){if(held&&visible(el)){seen.add(el);observer.unobserve(el)}}}
- function enter(id){const root=document.getElementById(id);if(!root||archive.hidden)return;scan(root);const elements=candidates(root).filter(visible);elements.forEach((el,i)=>{if(!seen.has(el)||pending.has(el))reveal(el,i%6)});for(const el of [...pending]){el.classList.remove('motion-pending');pending.delete(el)}}
- window.archiveMotion={hold(value){held=value;if(value){for(const cancel of counterCancels)cancel();counterCancels.clear();for(const a of running)a.cancel();for(const el of pending)el.classList.remove('motion-pending');pending.clear()}},prepare,enter};
+ window.archiveMotion={hold(value){held=value;if(value){running.forEach(a=>a.cancel());pending.clear()}},prepare,enter};
  scan(main);document.documentElement.dataset.motion='on';
- new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes){if(node.nodeType!==1||node.closest('.arcade-stage,.ink-ripple,.motion-title-line'))continue;if(node.matches(selected))register(node);scan(node)}}).observe(main,{childList:true,subtree:true});
- new MutationObserver(()=>{if(!archive.hidden){const id=document.body.dataset.archiveRoom||'home';prepare(id);requestAnimationFrame(()=>enter(id))}}).observe(archive,{attributes:true,attributeFilter:['hidden']});
- if(!archive.hidden){activeRoom=document.body.dataset.archiveRoom||'home';prepare(activeRoom);requestAnimationFrame(()=>enter(activeRoom))}
- reduce.addEventListener('change',()=>{if(reduce.matches){held=false;for(const a of running)a.cancel();for(const cancel of counterCancels)cancel();counterCancels.clear();pending.forEach(el=>el.classList.remove('motion-pending'));pending.clear()}});
- document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const cancel of counterCancels)cancel();counterCancels.clear();main.querySelectorAll('[data-motion-visible=true]').forEach(el=>el.dataset.motionVisible='false')}else{scenes.disconnect();knownScenesReset()}});
- function knownScenesReset(){main.querySelectorAll(sceneSelector).forEach(el=>scenes.observe(el))}
+ new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes){if(node.nodeType===1&&!node.closest('.arcade-stage,.motion-title-line,.sheet-chrome'))scan(node)}}).observe(main,{childList:true,subtree:true});
+ document.addEventListener('archive:opened',()=>{prepare(document.body.dataset.archiveRoom||'home');requestAnimationFrame(()=>enter(document.body.dataset.archiveRoom||'home'))});
+ if(!archive.hidden){prepare(document.body.dataset.archiveRoom||'home');requestAnimationFrame(()=>enter(document.body.dataset.archiveRoom||'home'))}
+ preference.addEventListener('change',()=>{if(preference.matches){running.forEach(a=>a.cancel());held=false;pending.clear()}});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)running.forEach(a=>a.cancel())});
 })();

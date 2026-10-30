@@ -1,0 +1,17 @@
+/* The same curve opens, reverses and dismisses every sheet. */
+@property --dialog-dim{syntax:'<number>';inherits:true;initial-value:1}
+html.coherent-motion dialog{--dialog-dim:1;transform-origin:50% 65%;overscroll-behavior:contain}
+html.coherent-motion dialog[open]::backdrop{opacity:var(--dialog-dim,1);transition:none!important;background:#170e25b8;backdrop-filter:none}
+html.coherent-motion dialog.is-closing{pointer-events:auto}
+html.coherent-motion dialog[data-dialog-state=opening],html.coherent-motion dialog[data-dialog-state=closing],html.coherent-motion dialog.is-dragging{will-change:translate,opacity}
+html.coherent-motion .sheet-grip{touch-action:none;-webkit-user-select:none;user-select:none}
+html.coherent-motion .sheet-grip span{transition:width 160ms var(--motion-ease),background-color 160ms linear}
+html.coherent-motion .is-dragging .sheet-grip span{width:44px;background:#ffe6cebb}
+html.coherent-motion #lightbox{transform-origin:50% 50%}
+html.coherent-motion #lightbox figure{transform-origin:50% 50%}
+@media(max-width:700px){
+ html.coherent-motion dialog:not(#lightbox){margin:auto auto 0;border-bottom:0;padding-bottom:max(24px,env(safe-area-inset-bottom));max-height:calc(100dvh - max(14px,env(safe-area-inset-top)));border-radius:28px 28px 0 0}
+ html.coherent-motion .sheet-chrome{background:linear-gradient(180deg,#49364ffb,#44314ff5);border-bottom-color:#f7dbe40d}
+ html.coherent-motion #agmina-date{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){html.coherent-motion .sheet-grip span{transition:none}html.coherent-motion dialog{will-change:auto!important}}

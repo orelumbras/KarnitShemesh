@@ -71,27 +71,14 @@ photos: [
 
 ## תנועה וניווט בין אגפים
 
-`motion.js` ו־`motion.css` מוסיפים כניסת כותרות לפי שורות, חשיפה מדורגת של תוכן בגלילה, תנועה באיורים, תגובת מגע, מונים, פתיחת חלונות ותפריט אגפים תחתון. התנועה מבוססת על opacity/translate/scale ועל IntersectionObserver; תנועה באיורים נעצרת כשהם מחוץ למסך. אין יותר כפתור או מצב ידני של ״תנועה עדינה״. העדפת התנועה המופחתת של מערכת ההפעלה עדיין מכובדת אוטומטית.
+האתר משתמש במערכת תנועה אחת עם פרופיל משותף ב־`motion.js`: תגובת מגע 100ms, שחרור 220ms, מעבר מסך ופתיחת חלון 360ms, סגירה 260ms וכניסת תוכן 380ms, עם אותה עקומת האטה. כותרות נשארות ב־Karantina; טקסט קריאה ב־Kammer Regular שסופק. אין מתג תנועה ידני; העדפת התנועה המופחתת של מערכת ההפעלה מכובדת אוטומטית.
 
-הניווט ב־`hub.js` משתמש ב־View Transitions כשיש תמיכה כדי להעביר את האיור מהכרטיס לכותרת האגף ובחזרה. בדפדפנים אחרים הכניסה לתוכן נעשית באנימציות מקומיות. מעבר מהיר מבטל את המעבר הקודם; יש טיפול בדחיית הבטחת `ready` בעת ביטול.
+`hub.js` עוטף את האגפים במשטחי DOM אמיתיים. בכניסה, המשטח החדש נכנס משמאל והקודם זז מעט לעומק; בחזרה, התנועה הפוכה. בזמן המעבר נשמר היסט הגלילה של כל משטח, ולחיצה נוספת מכוונת את התנועה מהמיקום המחושב הנוכחי. בסיום מוסרים המיקום הקבוע וכל הטרנספורמציות, כך שגלילה רגילה ומשחק במסך מלא פועלים כרגיל. אין שכפול תוכן או מזהים ואין תלות ב־View Transitions של הדפדפן. משטחים יוצאים אינם נגישים למגע או לפוקוס. מעבר לרקע, שינוי גודל והפעלת המשחק מסיימים את המעבר לנקודה תקינה.
 
-החזרה לחדר הבקרה משחזרת את מקום בחירת האגפים ולא את הפתיח העליון. מיקומי הגלילה נשמרים ב־sessionStorage ובהיסטוריה של הלשונית, כולל אחורה/קדימה ורענון. במעבר מאגף שנפתח ללא גלילה קודמת בבית, החזרה מכוונת לבחירת האגפים. הלוגו בבית מאפשר לעלות לפתיח. בורר האגפים נפתח כ־dialog עם תמיכה במקלדת ומאפשר מעבר ישיר בין כל האגפים; הוא מוסתר בזמן משחק במסך מלא.
+החזרה לבית משחזרת את מקום בחירת האגפים. מיקומי הגלילה נשמרים בהיסטוריית הלשונית וב־sessionStorage, כולל אחורה/קדימה ורענון. `app-shell.js` ו־`mobile-shell.css` מספקים סרגל קבוע של בית, תיקים, משחק, קיר ועוד, עם סימון שנע בין היעדים. מעבר בלשוניות שומר את מקום הגלילה בכל אגף וכיוונו תואם את סדר היעדים בסרגל. בחירה חוזרת בלשונית הנוכחית מעלה את התוכן לראש האגף. יתר האגפים נגישים מחלון ״עוד״. כותרת האגף מופיעה בסרגל העליון כשהאיור נגלל החוצה; לחיצה עליה מעלה לראש האגף. האיור והכותרת מגיבים לגלילה בתנועה קטנה, והסרגל התחתון אינו משנה גודל או מיקום במעבר בין אגפים.
 
-בדיקת דפדפן אופציונלית (לאחר התקנת Python Playwright ודפדפן Chromium): `python tests/navigation.browser.py http://localhost:8000`. הבדיקה מכסה חזרה למקום, אחורה/קדימה, רענון, בחירה מהתפריט, ניווט מהיר, ביטול המצב הישן, כל האגפים ו־24 שילובי רוחב/אגף, וכן העדפת תנועה מופחתת של המכשיר. הבדיקה אינה מפרסמת פתקים בקיר המשותף.
+`interactions.js` ו־`dialog-motion.css` מנהלים תגובות מגע וחלונות. חלון בנייד עולה מלמטה בגובהו המלא, כולל הצללה רציפה; תמונה נפתחת בדעיכה והתרחבות קטנה. סגירה בזמן פתיחה או פתיחה בזמן סגירה ממשיכות מהמצב הנוכחי. סגירה שבוטלה מחזירה `false` מההבטחה, כדי שבחירה שבוטלה בחלון האגפים לא תנווט ליעד ישן. גרירה קצרה או מבוטלת מחזירה את החלון למקומו, וגרירה מכוונת סוגרת אותו ומחזירה פוקוס למפעיל. בזמן שמירת פתק אין סגירה בגרירה.
 
-## Mobile app polish
+המשחק וה־API של הפתקים והדירוג אינם משתנים בעדכון הזה. הממשק שומר על חיפוש, גלריה עם החלקה, פתיחת תיקים, טיוטות פתקים, תוצאות משחק והשהיה ברקע.
 
-Reading text uses the supplied Kammer Regular (400) from assets/fonts; display headings retain Karantina. app-shell.css and app-shell.js provide the compact mobile home, direct shortcuts, a local last-room shortcut, contextual bottom navigation, keyboard-aware dock visibility, bottom-sheet dialogs, and swipe photo navigation. The gallery starts paused and its arrows follow RTL scroll coordinates. Ambient artwork loops are disabled; reveals are shorter and do not repeat when returning to content. Browsers without View Transitions receive a short local entrance instead. Reduced-motion preferences still disable motion.
-
-Validation: JavaScript syntax and Git whitespace checks pass. The existing browser navigation script was updated for the shorter home. The later interaction refinement was checked in the in-app browser as described below.
-
-
-## Interaction refinement
-
-`interactions.js` and `interactions.css` own press/release feedback, dialog opening and closing, mobile sheet gestures, and shared motion timing. Dialogs keep their native modal focus behavior and restore focus to their opener; mobile close controls remain visible while scrolling. Short drags spring back, deliberate drags dismiss, and movement during a press cancels its feedback. Reduced motion and background-tab changes cancel active effects.
-
-Room transitions keep the header and dock stationary, avoid replaying an entrance over the incoming screen, and yield to new pointer input. The group content order now puts the intelligence heading before awards and forecasts, and the friendship section before its archive introduction. Text and content are retained.
-
-Photos reserve their intrinsic dimensions. The viewer waits for decoding, reports loading/errors, ignores stale requests, and prepares adjacent photos. Search has a clear action and result count. Filters and quiz results have focused feedback. The game uses a centered canvas with matching drawing dimensions on wide screens and a compact landscape HUD; unchanged HUD values are no longer rewritten repeatedly. Its engine and rules are unchanged.
-
-Validation: eight sections checked at widths 320, 390, 430, 768, and 1280 in the in-app browser, with no horizontal overflow observed. Checked dialog opening/closing, sticky close controls, short/long drag behavior, focus restoration, search/clear, photo decoding and next-photo controls, room picker, browser back/forward, note-form opening/closing without posting, and game start/pause/exit. Game canvas sizes were checked in portrait, landscape, and desktop viewports. No JavaScript warnings or errors were observed. JavaScript syntax checks, Git whitespace checks, and the arcade engine suite passed. Physical-device frame pacing and OS reduced-motion emulation were not measured in this browser session; a fixed 60 FPS rate is not claimed.
+בדיקות דפדפן אופציונליות: `python tests/navigation.browser.py http://localhost:8000` ו־`python tests/motion.browser.py http://localhost:8000`, לאחר התקנת Python Playwright ודפדפן Chromium. הן מכסות היסטוריה וגלילה, ניווט מהיר, גאומטריה קבועה של הסרגל, כותרת בגלילה, ביטול והיפוך תנועה של חלונות, מחוות, פוקוס, גלריה, טופס פתקים, משחק במסך מלא, ארבעים שילובי אגף וגודל מסך, ומצב תנועה מופחתת. בדיקות API מדומות ואינן מוסיפות פתקים או ציונים לשרת החי. בדיקת המשחק: `python tests/arcade.browser.py`.

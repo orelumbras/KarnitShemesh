@@ -1,0 +1,35 @@
+/* Persistent navigation. No destination changes width as the current room changes. */
+html.coherent-motion{--app-header-height:calc(66px + env(safe-area-inset-top));--app-dock-height:68px;--app-dock-gap:calc(10px + env(safe-area-inset-bottom));--shell-follow:var(--motion-ease)}
+html.coherent-motion .room-dock.mobile-shell,
+html.coherent-motion .room-dock.mobile-shell:has(a[hidden]){display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;position:fixed;left:50%;right:auto;bottom:var(--app-dock-gap);translate:-50% 0;width:min(520px,calc(100vw - 24px));max-width:none;height:var(--app-dock-height);padding:6px;border:1px solid #ecd1de35;border-radius:23px;background:#30263fed;box-shadow:0 8px 32px #160f2959;backdrop-filter:none;isolation:isolate;transition:opacity 160ms linear;view-transition-name:none}
+html.coherent-motion .mobile-shell .dock-item{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px!important;min-width:0;min-height:54px;height:54px;margin:0;padding:4px 2px!important;border:0;border-radius:16px;box-shadow:none;background:none;flex:none;color:#c8b9d0;white-space:nowrap;text-decoration:none;font:400 11px/1.2 var(--reading)!important;overflow:visible;isolation:auto;transition:color 180ms linear;touch-action:manipulation}
+html.coherent-motion .mobile-shell .dock-item>span{font:400 11px/1.2 var(--reading)!important;color:inherit;letter-spacing:0!important}
+html.coherent-motion .mobile-shell .dock-item svg{display:block;width:23px;height:23px;flex-shrink:0;pointer-events:none}
+html.coherent-motion .mobile-shell .dock-item.is-current{background:none;color:#3a2a43;box-shadow:none}
+html.coherent-motion .mobile-shell .dock-item:focus-visible{outline:2px solid #bce9e0;outline-offset:-1px}
+html.coherent-motion .mobile-shell .dock-indicator{position:absolute;z-index:0;left:0;top:6px;height:54px;width:var(--dock-width,0px);translate:var(--dock-x,0px) 0;border-radius:16px;background:linear-gradient(120deg,#f9c8cc,#ffe0b2);box-shadow:inset 0 1px #fff9,0 2px 8px #190f2426;opacity:0;pointer-events:none;transition:translate 320ms var(--shell-follow),width 320ms var(--shell-follow),opacity 120ms linear}
+html.coherent-motion .mobile-shell.mobile-shell-ready .dock-indicator{opacity:1}
+html.coherent-motion .mobile-shell .dock-item:hover{background:none}
+html.coherent-motion .mobile-shell .dock-item:after{display:none}
+html.coherent-motion .dialog-open .room-dock.mobile-shell{opacity:0;pointer-events:none}
+html.coherent-motion :is(.keyboard-open,.arcade-active) .room-dock.mobile-shell{display:none!important}
+html.coherent-motion .mobile-header.nav{--header-progress:0;position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;height:var(--app-header-height);min-height:var(--app-header-height);max-height:var(--app-header-height);padding:env(safe-area-inset-top) max(14px,calc((100vw - 1240px)/2)) 0;border-bottom:1px solid #e9cfdf22;box-shadow:0 3px 16px #1b122014;background:#2d2239f5;backdrop-filter:none;view-transition-name:none;z-index:35}
+html.coherent-motion .mobile-header>nav{display:none!important}
+html.coherent-motion .mobile-header .app-context-back{display:grid;place-items:center;flex:0 0 40px;width:40px;height:44px;min-height:44px;min-width:40px;border-radius:13px;border:1px solid #e8ccdb28;background:#ffffff04;color:#f8d8bf;transition:opacity 180ms linear;font-size:16px!important}
+html.coherent-motion .app-context-back svg{width:23px;height:23px}
+html.coherent-motion .mobile-header[data-room=home] .app-context-back{visibility:hidden;pointer-events:none;opacity:0}
+html.coherent-motion .mobile-header .app-header-copy{position:relative;flex:1;min-width:0;height:48px;display:flex;align-items:center;justify-content:center;text-align:center;isolation:isolate;overflow:hidden}
+html.coherent-motion .mobile-header .brand{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;gap:5px;min-width:0;margin:0;padding:0;white-space:nowrap;font:400 28px/1 Karantina,Arial!important;opacity:clamp(0,calc(1 - var(--header-progress) * 2),1);translate:0 calc(var(--header-progress) * -16px);pointer-events:auto;transition:none;color:#fbe5ce}
+html.coherent-motion .mobile-header .brand>span{display:none}
+html.coherent-motion .mobile-header .brand[aria-hidden=true]{pointer-events:none}
+html.coherent-motion .mobile-header .app-context-title{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;margin:0;padding:0 4px;min-height:44px;min-width:0;width:100%;font:400 29px/1 Karantina,Arial!important;color:#ffe0b1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:clamp(0,calc(var(--header-progress) * 2 - 1),1);translate:0 calc((1 - var(--header-progress)) * 16px);pointer-events:auto;transition:none}
+html.coherent-motion .mobile-header .app-context-title[aria-hidden=true]{pointer-events:none}
+html.coherent-motion .mobile-header #logout{flex:0 0 45px;width:45px;min-width:45px;min-height:44px;max-height:44px;margin:0;padding:4px 0;font:400 11px/1.3 var(--reading)!important;white-space:nowrap;text-decoration:none;color:#c6b4cc}
+html.coherent-motion .mobile-header :is(.app-context-title,.app-context-back,.brand):focus-visible{outline:2px solid #b9e8dc;outline-offset:0;border-radius:10px}
+html.coherent-motion .section-cover{--cover-progress:0}
+html.coherent-motion .section-cover-image{translate:0 calc(var(--cover-progress) * 18px);scale:calc(1 + var(--cover-progress) * .025);transform-origin:center 25%}
+html.coherent-motion .section-cover>.section-heading,html.coherent-motion .section-cover>.heart-cover-copy{translate:0 calc(var(--cover-progress) * -9px);opacity:calc(1 - var(--cover-progress) * .25)}
+html.coherent-motion .hub-enabled .footer{padding-bottom:calc(var(--app-dock-height) + var(--app-dock-gap) + 35px)}
+@media(max-width:359px){html.coherent-motion .mobile-header.nav{padding-inline:10px;gap:4px}html.coherent-motion .mobile-header .brand{font-size:25px!important}html.coherent-motion .mobile-header .app-context-title{font-size:26px!important}html.coherent-motion .mobile-shell .dock-item>span{font-size:10px!important}html.coherent-motion .mobile-shell .dock-item svg{width:22px;height:22px}}
+@media(max-height:500px) and (orientation:landscape){html.coherent-motion{--app-header-height:calc(56px + env(safe-area-inset-top));--app-dock-height:60px;--app-dock-gap:calc(6px + env(safe-area-inset-bottom))}html.coherent-motion .mobile-shell .dock-item{min-height:46px;height:46px;gap:3px!important}html.coherent-motion .mobile-shell .dock-indicator{height:46px}html.coherent-motion .mobile-shell .dock-item svg{width:20px;height:20px}}
+@media(prefers-reduced-motion:reduce){html.coherent-motion .mobile-shell .dock-indicator,html.coherent-motion .mobile-shell .dock-item{transition:none}html.coherent-motion .section-cover-image{translate:none;scale:1}html.coherent-motion .section-cover>.section-heading,html.coherent-motion .section-cover>.heart-cover-copy{translate:none;opacity:1}}
